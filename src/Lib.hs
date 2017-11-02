@@ -32,7 +32,10 @@ $(deriveJSON defaultOptions ''User)
 --   t <- getCurrentTime
 
 --type API = "users" :> Get '[JSON] [User]
-type API = "users" :> Get '[JSON] UTCTime
+type API = "time" :> Get '[JSON] UTCTime
+         :<|> "i" :> Raw
+
+type StaticAPI = "i" :> Raw
      --    :<|> "currentTime" :> getTime
 
 
@@ -42,21 +45,34 @@ startApp = run 1234 app
 app :: Application
 app = serve api server
 
+-- api :: Proxy StaticAPI
+-- api = Proxy
+
 api :: Proxy API
 api = Proxy
 
+
+-- staticServer :: Server API
+-- staticServer = serveDirectoryWebApp "static"
 -- https://hackage.haskell.org/package/servant-server-0.11.0.1/docs/Servant-Server-Internal-Handler.html
+
 
 -- Handler [User]
 --   runHandler :: ExceptT ServantErr (IO a)
+-- server :: Server API
+-- server = return $ liftIO getCurrentTime
+--     :<|> serveDirectoryWebApp "static"
+
 server :: Server API
-server = do
-  -- IO UTCTime -> Handler UTCTime
-  time <- liftIO getCurrentTime
-  return time
+server = liftIO getCurrentTime :<|> serveDirectoryWebApp "stock-frontend/static"
+
 
 users :: [User]
 users = [ User 1 "Isaac" "Newton"
         , User 2 "Albert" "Einstein"
         , User 3 "Stephen" "Hawking"
         ]
+
+
+
+-- https://www.stackbuilders.com/tutorials/functional-full-stack/purescript-bridge/
