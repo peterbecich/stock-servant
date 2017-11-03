@@ -5,6 +5,8 @@ module Lib
     ( startApp
     ) where
 
+import System.Random (randomRIO)
+
 import Data.Aeson
 import Data.Aeson.TH
 
@@ -24,20 +26,11 @@ data User = User
 
 $(deriveJSON defaultOptions ''User)
 
-
--- getCurrentTime :: IO UTCTime
-
--- getTime :: Handler String
--- getTime = do
---   t <- getCurrentTime
-
---type API = "users" :> Get '[JSON] [User]
 type API = "time" :> Get '[JSON] UTCTime
+         :<|> "randomInt" :> Get '[PlainText] String
          :<|> "i" :> Raw
 
 type StaticAPI = "i" :> Raw
-     --    :<|> "currentTime" :> getTime
-
 
 startApp :: IO ()
 startApp = run 1234 app
@@ -45,27 +38,13 @@ startApp = run 1234 app
 app :: Application
 app = serve api server
 
--- api :: Proxy StaticAPI
--- api = Proxy
-
 api :: Proxy API
 api = Proxy
 
-
--- staticServer :: Server API
--- staticServer = serveDirectoryWebApp "static"
--- https://hackage.haskell.org/package/servant-server-0.11.0.1/docs/Servant-Server-Internal-Handler.html
-
-
--- Handler [User]
---   runHandler :: ExceptT ServantErr (IO a)
--- server :: Server API
--- server = return $ liftIO getCurrentTime
---     :<|> serveDirectoryWebApp "static"
-
 server :: Server API
-server = liftIO getCurrentTime :<|> serveDirectoryWebApp "stock-frontend/static"
-
+server = (liftIO getCurrentTime)
+       :<|> (liftIO $ show <$> (randomRIO(1,10) :: IO Int))
+       :<|> (serveDirectoryWebApp "stock-frontend/static")
 
 users :: [User]
 users = [ User 1 "Isaac" "Newton"
@@ -73,6 +52,6 @@ users = [ User 1 "Isaac" "Newton"
         , User 3 "Stephen" "Hawking"
         ]
 
-
+-- https://hackage.haskell.org/package/servant-server-0.11.0.1/docs/Servant-Server-Internal-Handler.html
 
 -- https://www.stackbuilders.com/tutorials/functional-full-stack/purescript-bridge/
