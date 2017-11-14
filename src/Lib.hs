@@ -23,6 +23,8 @@ import Servant
 
 import System.Random (randomRIO)
 
+import Stock
+
 data User = User
   { userId        :: Int
   , userFirstName :: String
@@ -31,17 +33,9 @@ data User = User
 
 $(deriveJSON defaultOptions ''User)
 
-data TickerQueryResponse = TickerQueryResponse
-  { tickerSymbol :: String
-  , description :: String
-  } deriving Generic
-
-instance ToJSON TickerQueryResponse
-
-fakeTickerQueryResponse = TickerQueryResponse "foo" "bar"
-
 type API = "time" :> Get '[JSON] UTCTime
          :<|> "tickerQuery" :> QueryParam "q" String :> Get '[JSON] TickerQueryResponse
+         :<|> "correlated" :> QueryParam "q" String :> QueryParam "limit" Int :> Get '[JSON] [TickerQueryResponse]
          :<|> "randomInt" :> Get '[PlainText] String
          :<|> "i" :> Raw
 
@@ -57,6 +51,7 @@ api = Proxy
 server :: Server API
 server = timeEndpoint
   :<|> tickerQueryEndpoint
+  :<|> correlatedEndpoint
   :<|> randomIntEndpoint
   :<|> staticEndpoint
   where timeEndpoint :: Handler UTCTime
@@ -65,6 +60,11 @@ server = timeEndpoint
         tickerQueryEndpoint :: Maybe String -> Handler TickerQueryResponse
         tickerQueryEndpoint (Just query) = pure fakeTickerQueryResponse
         tickerQueryEndpoint Nothing = pure fakeTickerQueryResponse
+
+        correlatedEndpoint :: Maybe String -> Maybe Int -> Handler [TickerQueryResponse]
+        correlatedEndpoint (Just query) (Just limit) = pure $ take limit (fakeStocks query)
+        correlatedEndpoint (Just query) Nothing = pure $ take 10 (fakeStocks query)
+        correlatedEndpoint Nothing _ = pure $ []
 
         randomIntEndpoint :: Handler String
         randomIntEndpoint = liftIO $ show <$> (randomRIO(1,10) :: IO Int)
