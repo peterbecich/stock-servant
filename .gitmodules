@@ -1,3 +1,6 @@
 [submodule "stock-frontend"]
 	path = stock-frontend
 	url = git@github.com:peterbecich/stock-frontend.git
+[submodule "stock-common"]
+	path = stock-common
+	url = git@github.com:peterbecich/stock-common.git

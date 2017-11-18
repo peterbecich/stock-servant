@@ -16,8 +16,9 @@ cabal-version:       >=1.10
 library
   hs-source-dirs:      src
   exposed-modules:     Lib
-                     , Stock
   build-depends:       base >= 4.7 && < 5
+                     , stock-common >= 0.1.0.0
+                     , yaml-config >= 0.4.0
                      , aeson
                      , servant-server
                      , wai

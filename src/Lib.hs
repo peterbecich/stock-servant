@@ -24,7 +24,7 @@ import Servant
 
 import System.Random (randomRIO)
 
-import Stock
+import Types.Tick
 
 data User = User
   { userId        :: Int
@@ -35,10 +35,10 @@ data User = User
 $(deriveJSON defaultOptions ''User)
 
 type API = "time" :> Get '[JSON] UTCTime
-         :<|> "tickerQuery" :> QueryParam "q" String :> Get '[JSON] TickerQueryResponse
-         :<|> "correlated" :> QueryParam "q" String :> QueryParam "limit" Int :> QueryParam "timespan" Int :> Get '[JSON] [TickerQueryResponse]
-         :<|> "randomInt" :> Get '[PlainText] String
-         :<|> "i" :> Raw
+         -- :<|> "tickerQuery" :> QueryParam "q" String :> Get '[JSON] TickerQueryResponse
+         -- :<|> "correlated" :> QueryParam "q" String :> QueryParam "limit" Int :> QueryParam "timespan" Int :> Get '[JSON] [TickerQueryResponse]
+         -- :<|> "randomInt" :> Get '[PlainText] String
+         -- :<|> "i" :> Raw
 
 startApp :: IO ()
 startApp = run 1234 app
@@ -50,34 +50,36 @@ api :: Proxy API
 api = Proxy
 
 server :: Server API
-server = timeEndpoint
-  :<|> tickerQueryEndpoint
-  :<|> correlatedEndpoint
-  :<|> randomIntEndpoint
-  :<|> staticEndpoint
-  where timeEndpoint :: Handler UTCTime
-        timeEndpoint = liftIO getCurrentTime
+server = undefined
 
-        tickerQueryEndpoint :: Maybe String -> Handler TickerQueryResponse
-        tickerQueryEndpoint (Just query) = do
-          liftIO $ putStrLn $ "query: " <> query
-          pure fakeTickerQueryResponse
-        tickerQueryEndpoint Nothing = pure fakeTickerQueryResponse
+  -- timeEndpoint
+  -- :<|> tickerQueryEndpoint
+  -- :<|> correlatedEndpoint
+  -- :<|> randomIntEndpoint
+  -- :<|> staticEndpoint
+  -- where timeEndpoint :: Handler UTCTime
+  --       timeEndpoint = liftIO getCurrentTime
 
-        correlatedEndpoint :: Maybe String -> Maybe Int -> Maybe Int -> Handler [TickerQueryResponse]
-        correlatedEndpoint (Just query) (Just limit) (Just timespan) =
-          pure $ take limit (fakeStocks query)
-        correlatedEndpoint (Just query) Nothing (Just timespan) =
-          pure $ take 10 (fakeStocks query)
-        correlatedEndpoint (Just query) (Just limit) Nothing =
-          pure $ take 10 (fakeStocks query)
-        correlatedEndpoint Nothing _ _ = pure $ []
+  --       tickerQueryEndpoint :: Maybe String -> Handler TickerQueryResponse
+  --       tickerQueryEndpoint (Just query) = do
+  --         liftIO $ putStrLn $ "query: " <> query
+  --         pure fakeTickerQueryResponse
+  --       tickerQueryEndpoint Nothing = pure fakeTickerQueryResponse
 
-        randomIntEndpoint :: Handler String
-        randomIntEndpoint = liftIO $ show <$> (randomRIO(1,10) :: IO Int)
+  --       correlatedEndpoint :: Maybe String -> Maybe Int -> Maybe Int -> Handler [TickerQueryResponse]
+  --       correlatedEndpoint (Just query) (Just limit) (Just timespan) =
+  --         pure $ take limit (fakeStocks query)
+  --       correlatedEndpoint (Just query) Nothing (Just timespan) =
+  --         pure $ take 10 (fakeStocks query)
+  --       correlatedEndpoint (Just query) (Just limit) Nothing =
+  --         pure $ take 10 (fakeStocks query)
+  --       correlatedEndpoint Nothing _ _ = pure $ []
 
-        staticEndpoint :: Server Raw
-        staticEndpoint = serveDirectoryWebApp "stock-frontend"
+  --       randomIntEndpoint :: Handler String
+  --       randomIntEndpoint = liftIO $ show <$> (randomRIO(1,10) :: IO Int)
+
+  --       staticEndpoint :: Server Raw
+  --       staticEndpoint = serveDirectoryWebApp "stock-frontend"
 
 -- https://hackage.haskell.org/package/servant-server-0.11.0.1/docs/Servant-Server-Internal-Handler.html
 
