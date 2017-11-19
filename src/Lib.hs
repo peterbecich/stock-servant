@@ -15,7 +15,6 @@ import GHC.Generics
 import Data.Aeson
 import Data.Aeson.TH
 import Data.Monoid
-import Data.Time.Clock
 
 import Network.Wai
 import Network.Wai.Handler.Warp
@@ -24,17 +23,16 @@ import Servant
 
 import System.Random (randomRIO)
 
+import Types.Stock
+import Types.Stock.Psql
+import Types.Stock.JSON
 import Types.Tick
 
-data User = User
-  { userId        :: Int
-  , userFirstName :: String
-  , userLastName  :: String
-  } deriving (Eq, Show)
+import DB.Psql
 
-$(deriveJSON defaultOptions ''User)
+type API = "stocks" :> Get '[JSON] [Stock]
 
-type API = "time" :> Get '[JSON] UTCTime
+  
          -- :<|> "tickerQuery" :> QueryParam "q" String :> Get '[JSON] TickerQueryResponse
          -- :<|> "correlated" :> QueryParam "q" String :> QueryParam "limit" Int :> QueryParam "timespan" Int :> Get '[JSON] [TickerQueryResponse]
          -- :<|> "randomInt" :> Get '[PlainText] String
@@ -49,8 +47,21 @@ app = serve api server
 api :: Proxy API
 api = Proxy
 
+confPath = "conf/servant.conf"
+
 server :: Server API
-server = undefined
+server = stocksEndpoint
+
+  where
+    stocksEndpoint :: Handler [Stock]
+    stocksEndpoint = liftIO $ do
+      psqlConn <- getPsqlConnection confPath
+
+      stocks <- getStocks psqlConn
+
+      closePsqlConnection psqlConn
+
+      return stocks
 
   -- timeEndpoint
   -- :<|> tickerQueryEndpoint
