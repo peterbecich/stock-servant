@@ -26,6 +26,9 @@ library
                      , time
                      , purescript-bridge
                      , random
+                     , uuid
+                     , hedis
+                     , bytestring
   default-language:    Haskell2010
 
 executable stock-servant

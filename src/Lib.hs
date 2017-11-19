@@ -14,7 +14,10 @@ import GHC.Generics
 
 import Data.Aeson
 import Data.Aeson.TH
+import Data.ByteString.Char8
 import Data.Monoid
+import Data.UUID
+import Database.Redis
 
 import Network.Wai
 import Network.Wai.Handler.Warp
@@ -26,12 +29,15 @@ import System.Random (randomRIO)
 import Types.Stock
 import Types.Stock.Psql
 import Types.Stock.JSON
+import Types.Stock.Redis
 import Types.Tick
 
+import DB.Redis
 import DB.Psql
 
 type API = "stocks" :> Get '[JSON] [Stock]
-
+         :<|> "latestTickerTimestamp" :> QueryParam "stockId" UUID :> Get '[PlainText] String
+         
   
          -- :<|> "tickerQuery" :> QueryParam "q" String :> Get '[JSON] TickerQueryResponse
          -- :<|> "correlated" :> QueryParam "q" String :> QueryParam "limit" Int :> QueryParam "timespan" Int :> Get '[JSON] [TickerQueryResponse]
@@ -51,6 +57,7 @@ confPath = "conf/servant.conf"
 
 server :: Server API
 server = stocksEndpoint
+         :<|> latestTickerTimestampEndpoint
 
   where
     stocksEndpoint :: Handler [Stock]
@@ -62,6 +69,20 @@ server = stocksEndpoint
       closePsqlConnection psqlConn
 
       return stocks
+
+    latestTickerTimestampEndpoint :: Maybe UUID -> Handler String
+    -- unsafe endpoint!
+    latestTickerTimestampEndpoint (Just stockId) = do
+      -- TODO improve this!  Don't open a connection for even req
+      redisConn <- liftIO $ getRedisConnection confPath
+
+      -- really unsafe!!
+      (Right mLatestTimestamp) <- liftIO $ runRedis redisConn (getLatestTimestamp' stockId)
+      let (Just latestTimestamp) = mLatestTimestamp
+      liftIO $ closeRedisConnection redisConn
+
+      return (unpack latestTimestamp)
+      
 
   -- timeEndpoint
   -- :<|> tickerQueryEndpoint
