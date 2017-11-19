@@ -37,6 +37,7 @@ import DB.Psql
 
 type API = "stocks" :> Get '[JSON] [Stock]
          :<|> "latestTickerTimestamp" :> QueryParam "stockId" UUID :> Get '[PlainText] String
+         :<|> "latestTickerTimestamps" :> Get '[JSON] [(UUID, String)]
          
   
          -- :<|> "tickerQuery" :> QueryParam "q" String :> Get '[JSON] TickerQueryResponse
@@ -58,6 +59,7 @@ confPath = "conf/servant.conf"
 server :: Server API
 server = stocksEndpoint
          :<|> latestTickerTimestampEndpoint
+         :<|> latestTickerTimestampsEndpoint
 
   where
     stocksEndpoint :: Handler [Stock]
@@ -82,7 +84,19 @@ server = stocksEndpoint
       liftIO $ closeRedisConnection redisConn
 
       return (unpack latestTimestamp)
-      
+
+
+    latestTickerTimestampsEndpoint :: Handler [(UUID, String)]
+    -- unsafe endpoint!
+    latestTickerTimestampsEndpoint = do
+      -- TODO improve this!  Don't open a connection for even req
+      latestTimestamps <- pure $ do
+        redisConn <- getRedisConnection confPath
+        lt <- runRedis redisConn getLatestTimestamps
+        closeRedisConnection redisConn
+        return lt
+      liftIO $ latestTimestamps
+
 
   -- timeEndpoint
   -- :<|> tickerQueryEndpoint
