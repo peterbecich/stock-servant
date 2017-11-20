@@ -37,10 +37,11 @@ import Types.Tick
 import DB.Redis
 import DB.Psql
 
-type API = "stocks" :> Get '[JSON] [Stock]
-         :<|> "latestTickerTimestamp" :> QueryParam "stockId" UUID :> Get '[JSON] MostRecentTick
-         :<|> "latestTickerTimestamps" :> Get '[JSON] [MostRecentTick]
-         :<|> Raw
+type API = "stock" :> QueryParam "stockId" UUID :> Get '[JSON] Stock
+           :<|> "stocks" :> Get '[JSON] [Stock]
+           :<|> "latestTickerTimestamp" :> QueryParam "stockId" UUID :> Get '[JSON] MostRecentTick
+           :<|> "latestTickerTimestamps" :> Get '[JSON] [MostRecentTick]
+           :<|> Raw
          
          -- :<|> "tickerQuery" :> QueryParam "q" String :> Get '[JSON] TickerQueryResponse
          -- :<|> "correlated" :> QueryParam "q" String :> QueryParam "limit" Int :> QueryParam "timespan" Int :> Get '[JSON] [TickerQueryResponse]
@@ -58,13 +59,25 @@ api = Proxy
 confPath = "conf/servant.conf"
 
 server :: Server API
-server = stocksEndpoint
+server = stockEndpoint
+         :<|> stocksEndpoint
          :<|> latestTickerTimestampEndpoint
          :<|> latestTickerTimestampsEndpoint
          :<|> staticEndpoint
 
 
   where
+    stockEndpoint :: Maybe UUID -> Handler Stock
+    -- TODO make safe!!!
+    stockEndpoint (Just stockId) = liftIO $ do
+      psqlConn <- getPsqlConnection confPath
+
+      stock <- getStock stockId psqlConn
+
+      closePsqlConnection psqlConn
+
+      return (stock !! 0)
+    
     stocksEndpoint :: Handler [Stock]
     stocksEndpoint = liftIO $ do
       psqlConn <- getPsqlConnection confPath
