@@ -29,21 +29,22 @@ import System.Random (randomRIO)
 import Types.Stock
 import Types.Stock.Psql
 import Types.Stock.JSON
-import Types.Stock.Redis
+import Types.MostRecentTick
+import Types.MostRecentTick.Redis
+import Types.MostRecentTick.JSON
 import Types.Tick
 
 import DB.Redis
 import DB.Psql
 
 type API = "stocks" :> Get '[JSON] [Stock]
-         :<|> "latestTickerTimestamp" :> QueryParam "stockId" UUID :> Get '[PlainText] String
-         :<|> "latestTickerTimestamps" :> Get '[JSON] [(UUID, String)]
+         :<|> "latestTickerTimestamp" :> QueryParam "stockId" UUID :> Get '[JSON] MostRecentTick
+         :<|> "latestTickerTimestamps" :> Get '[JSON] [MostRecentTick]
+         :<|> Raw
          
-  
          -- :<|> "tickerQuery" :> QueryParam "q" String :> Get '[JSON] TickerQueryResponse
          -- :<|> "correlated" :> QueryParam "q" String :> QueryParam "limit" Int :> QueryParam "timespan" Int :> Get '[JSON] [TickerQueryResponse]
          -- :<|> "randomInt" :> Get '[PlainText] String
-         -- :<|> "i" :> Raw
 
 startApp :: IO ()
 startApp = run 1234 app
@@ -60,6 +61,8 @@ server :: Server API
 server = stocksEndpoint
          :<|> latestTickerTimestampEndpoint
          :<|> latestTickerTimestampsEndpoint
+         :<|> staticEndpoint
+
 
   where
     stocksEndpoint :: Handler [Stock]
@@ -72,7 +75,7 @@ server = stocksEndpoint
 
       return stocks
 
-    latestTickerTimestampEndpoint :: Maybe UUID -> Handler String
+    latestTickerTimestampEndpoint :: Maybe UUID -> Handler MostRecentTick
     -- unsafe endpoint!
     latestTickerTimestampEndpoint (Just stockId) = do
       -- TODO improve this!  Don't open a connection for even req
@@ -83,11 +86,10 @@ server = stocksEndpoint
       let (Just latestTimestamp) = mLatestTimestamp
       liftIO $ closeRedisConnection redisConn
 
-      return (unpack latestTimestamp)
+      return latestTimestamp
 
 
-    latestTickerTimestampsEndpoint :: Handler [(UUID, String)]
-    -- unsafe endpoint!
+    latestTickerTimestampsEndpoint :: Handler [MostRecentTick]
     latestTickerTimestampsEndpoint = do
       -- TODO improve this!  Don't open a connection for even req
       latestTimestamps <- pure $ do
@@ -97,35 +99,8 @@ server = stocksEndpoint
         return lt
       liftIO $ latestTimestamps
 
-
-  -- timeEndpoint
-  -- :<|> tickerQueryEndpoint
-  -- :<|> correlatedEndpoint
-  -- :<|> randomIntEndpoint
-  -- :<|> staticEndpoint
-  -- where timeEndpoint :: Handler UTCTime
-  --       timeEndpoint = liftIO getCurrentTime
-
-  --       tickerQueryEndpoint :: Maybe String -> Handler TickerQueryResponse
-  --       tickerQueryEndpoint (Just query) = do
-  --         liftIO $ putStrLn $ "query: " <> query
-  --         pure fakeTickerQueryResponse
-  --       tickerQueryEndpoint Nothing = pure fakeTickerQueryResponse
-
-  --       correlatedEndpoint :: Maybe String -> Maybe Int -> Maybe Int -> Handler [TickerQueryResponse]
-  --       correlatedEndpoint (Just query) (Just limit) (Just timespan) =
-  --         pure $ take limit (fakeStocks query)
-  --       correlatedEndpoint (Just query) Nothing (Just timespan) =
-  --         pure $ take 10 (fakeStocks query)
-  --       correlatedEndpoint (Just query) (Just limit) Nothing =
-  --         pure $ take 10 (fakeStocks query)
-  --       correlatedEndpoint Nothing _ _ = pure $ []
-
-  --       randomIntEndpoint :: Handler String
-  --       randomIntEndpoint = liftIO $ show <$> (randomRIO(1,10) :: IO Int)
-
-  --       staticEndpoint :: Server Raw
-  --       staticEndpoint = serveDirectoryWebApp "stock-frontend"
+    staticEndpoint :: Server Raw
+    staticEndpoint = serveDirectoryWebApp "stock-frontend"
 
 -- https://hackage.haskell.org/package/servant-server-0.11.0.1/docs/Servant-Server-Internal-Handler.html
 
