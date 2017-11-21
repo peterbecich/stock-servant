@@ -19,8 +19,11 @@ import Data.Monoid
 import Data.UUID
 import Database.Redis
 
+import qualified Data.Map.Lazy as Map
+
 import Network.Wai
 import Network.Wai.Handler.Warp
+import Data.Time.Clock (UTCTime)
 
 import Servant
 
@@ -39,8 +42,8 @@ import DB.Psql
 
 type API = "stock" :> QueryParam "stockId" UUID :> Get '[JSON] Stock
            :<|> "stocks" :> Get '[JSON] [Stock]
-           :<|> "latestTickerTimestamp" :> QueryParam "stockId" UUID :> Get '[JSON] MostRecentTick
-           :<|> "latestTickerTimestamps" :> Get '[JSON] [MostRecentTick]
+           :<|> "latestTickerTimestamp" :> QueryParam "stockId" UUID :> Get '[PlainText] String
+           :<|> "latestTickerTimestamps" :> Get '[JSON] (Map.Map UUID UTCTime)
            :<|> Raw
          
          -- :<|> "tickerQuery" :> QueryParam "q" String :> Get '[JSON] TickerQueryResponse
@@ -88,21 +91,21 @@ server = stockEndpoint
 
       return stocks
 
-    latestTickerTimestampEndpoint :: Maybe UUID -> Handler MostRecentTick
+    latestTickerTimestampEndpoint :: Maybe UUID -> Handler String
     -- unsafe endpoint!
     latestTickerTimestampEndpoint (Just stockId) = do
       -- TODO improve this!  Don't open a connection for even req
       redisConn <- liftIO $ getRedisConnection confPath
 
       -- really unsafe!!
-      (Right mLatestTimestamp) <- liftIO $ runRedis redisConn (getLatestTimestamp' stockId)
+      (Right mLatestTimestamp) <- liftIO $ runRedis redisConn (getLatestTimestamp stockId)
       let (Just latestTimestamp) = mLatestTimestamp
       liftIO $ closeRedisConnection redisConn
 
-      return latestTimestamp
+      return $ show latestTimestamp
 
 
-    latestTickerTimestampsEndpoint :: Handler [MostRecentTick]
+    latestTickerTimestampsEndpoint :: Handler (Map.Map UUID UTCTime)
     latestTickerTimestampsEndpoint = do
       -- TODO improve this!  Don't open a connection for even req
       latestTimestamps <- pure $ do

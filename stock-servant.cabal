@@ -29,6 +29,7 @@ library
                      , uuid
                      , hedis
                      , bytestring
+                     , containers
   default-language:    Haskell2010
 
 executable stock-servant
