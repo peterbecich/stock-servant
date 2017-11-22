@@ -45,10 +45,6 @@ type API = "stock" :> QueryParam "stockId" UUID :> Get '[JSON] Stock
            :<|> "latestTickerTimestamp" :> QueryParam "stockId" UUID :> Get '[PlainText] String
            :<|> "latestTickerTimestamps" :> Get '[JSON] (Map.Map UUID UTCTime)
            :<|> Raw
-         
-         -- :<|> "tickerQuery" :> QueryParam "q" String :> Get '[JSON] TickerQueryResponse
-         -- :<|> "correlated" :> QueryParam "q" String :> QueryParam "limit" Int :> QueryParam "timespan" Int :> Get '[JSON] [TickerQueryResponse]
-         -- :<|> "randomInt" :> Get '[PlainText] String
 
 startApp :: IO ()
 startApp = run 1234 app
