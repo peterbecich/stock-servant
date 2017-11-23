@@ -47,7 +47,7 @@ type API = "stock" :> QueryParam "stockId" UUID :> Get '[JSON] Stock
            :<|> Raw
 
 startApp :: IO ()
-startApp = run 1234 app
+startApp = run 80 app
 
 app :: Application
 app = serve api server
