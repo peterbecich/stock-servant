@@ -11,26 +11,21 @@ module Lib
 
 import Control.Monad
 import Control.Monad.IO.Class (liftIO)
-
-import GHC.Generics
-
 import Data.Aeson
 import Data.Aeson.TH
 import Data.ByteString.Char8
-import qualified Data.ByteString.Lazy.Char8 as C
+import Data.Either
 import Data.Monoid
+import Data.Time.Clock (UTCTime)
 import Data.UUID
 import Database.Redis
-import Data.Either
-import qualified Data.Map.Lazy as Map
-
+import GHC.Generics
 import Network.Wai
 import Network.Wai.Handler.Warp
-import Data.Time.Clock (UTCTime)
-
 import Servant
-
 import System.Random (randomRIO)
+import qualified Data.ByteString.Lazy.Char8 as C
+import qualified Data.Map.Lazy as Map
 
 import Types.Stock
 import Types.Stock.Psql
