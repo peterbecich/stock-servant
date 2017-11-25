@@ -3,11 +3,13 @@
 {-# LANGUAGE TypeOperators   #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Lib
     ( startApp
     ) where
 
+import Control.Monad
 import Control.Monad.IO.Class (liftIO)
 
 import GHC.Generics
@@ -15,10 +17,11 @@ import GHC.Generics
 import Data.Aeson
 import Data.Aeson.TH
 import Data.ByteString.Char8
+import qualified Data.ByteString.Lazy.Char8 as C
 import Data.Monoid
 import Data.UUID
 import Database.Redis
-
+import Data.Either
 import qualified Data.Map.Lazy as Map
 
 import Network.Wai
@@ -66,16 +69,20 @@ server = stockEndpoint
 
 
   where
+    -- http://haskell-servant.readthedocs.io/en/stable/tutorial/Server.html#failing-through-servanterr
+
     stockEndpoint :: Maybe UUID -> Handler Stock
-    -- TODO make safe!!!
-    stockEndpoint (Just stockId) = liftIO $ do
-      psqlConn <- getPsqlConnection confPath
-
-      stock <- getStock stockId psqlConn
-
-      closePsqlConnection psqlConn
-
-      return (stock !! 0)
+    stockEndpoint (Just stockId) = do
+      stocks <- liftIO $ do
+        psqlConn <- getPsqlConnection confPath
+        stocks <- getStock stockId psqlConn
+        closePsqlConnection psqlConn
+        return stocks
+        
+      case stocks of
+        (stock:_) -> return stock
+        _ -> throwError err404 { errBody = C.pack ("No stock with ID "<> (show stockId)) }
+    stockEndpoint Nothing = throwError err400 { errBody = "Missing stock UUID parameter: \"/stockId?stockId=[UUID]\"" }
     
     stocksEndpoint :: Handler [Stock]
     stocksEndpoint = liftIO $ do
@@ -88,22 +95,25 @@ server = stockEndpoint
       return stocks
 
     latestTickerTimestampEndpoint :: Maybe UUID -> Handler String
-    -- unsafe endpoint!
     latestTickerTimestampEndpoint (Just stockId) = do
-      -- TODO improve this!  Don't open a connection for even req
-      redisConn <- liftIO $ getRedisConnection confPath
+      mTimestamp <- liftIO $ do
+        redisConn <- getRedisConnection confPath
+        eTimestamp <- runRedis redisConn (getLatestTimestamp stockId) :: IO (Either Reply (Maybe UTCTime))
+        let
+          mTimestamp :: Maybe UTCTime
+          mTimestamp = either (\_ -> Nothing) id eTimestamp
+        closeRedisConnection redisConn
 
-      -- really unsafe!!
-      (Right mLatestTimestamp) <- liftIO $ runRedis redisConn (getLatestTimestamp stockId)
-      let (Just latestTimestamp) = mLatestTimestamp
-      liftIO $ closeRedisConnection redisConn
-
-      return $ show latestTimestamp
+        return mTimestamp
+        
+      case mTimestamp of
+        (Just timestamp) -> return $ show timestamp
+        Nothing -> throwError err404 { errBody = C.pack ("No stock with ID "<> (show stockId)) }
+    latestTickerTimestampEndpoint Nothing = throwError err400 { errBody = "Missing stock UUID parameter: \"/stockId?stockId=[UUID]\"" }  
 
 
     latestTickerTimestampsEndpoint :: Handler (Map.Map UUID UTCTime)
     latestTickerTimestampsEndpoint = do
-      -- TODO improve this!  Don't open a connection for even req
       latestTimestamps <- pure $ do
         redisConn <- getRedisConnection confPath
         lt <- runRedis redisConn getLatestTimestamps
