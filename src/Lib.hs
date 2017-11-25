@@ -46,8 +46,8 @@ type API = "stock" :> QueryParam "stockId" UUID :> Get '[JSON] Stock
            :<|> "latestTickerTimestamps" :> Get '[JSON] (Map.Map UUID UTCTime)
            :<|> Raw
 
-startApp :: IO ()
-startApp = run 80 app
+startApp :: Int -> IO ()
+startApp port = run port app
 
 app :: Application
 app = serve api server
