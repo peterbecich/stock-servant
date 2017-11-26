@@ -38,11 +38,24 @@ import Types.Tick
 import DB.Redis
 import DB.Psql
 
-type API = "stock" :> QueryParam "stockId" UUID :> Get '[JSON] Stock
-           :<|> "stocks" :> Get '[JSON] [Stock]
-           :<|> "latestTickerTimestamp" :> QueryParam "stockId" UUID :> Get '[PlainText] String
-           :<|> "latestTickerTimestamps" :> Get '[JSON] (Map.Map UUID UTCTime)
-           :<|> Raw
+-- type StockHandler = "stock" :> QueryParam "stockId" UUID :> Get '[JSON] (Headers '[Header "Access-Control-Allow-Origin" String] Stock)
+type StockHandler = "stock"
+                    :> QueryParam "stockId" UUID
+                    :> Get '[JSON] Stock
+type StocksHandler = "stocks"
+                     :> Get '[JSON] (Headers '[Header "Access-Control-Allow-Origin" String] [Stock])
+type LatestTickerTimestampHandler = "latestTickerTimestamp"
+                                    :> QueryParam "stockId" UUID
+                                    :> Get '[PlainText] (Headers '[Header "Access-Control-Allow-Origin" String] String)
+type LatestTickerTimestampsHandler = "latestTickerTimestamps"
+                                     :> Get '[JSON] (Map.Map UUID UTCTime)
+type RawHandler = Raw
+
+type API = StockHandler
+           :<|> StocksHandler
+           :<|> LatestTickerTimestampHandler
+           :<|> LatestTickerTimestampsHandler
+           :<|> RawHandler
 
 startApp :: Int -> IO ()
 startApp port = run port app
@@ -79,7 +92,7 @@ server = stockEndpoint
         _ -> throwError err404 { errBody = C.pack ("No stock with ID "<> (show stockId)) }
     stockEndpoint Nothing = throwError err400 { errBody = "Missing stock UUID parameter: \"/stockId?stockId=[UUID]\"" }
     
-    stocksEndpoint :: Handler [Stock]
+    -- stocksEndpoint :: Handler [Stock]
     stocksEndpoint = liftIO $ do
       psqlConn <- getPsqlConnection confPath
 
@@ -87,9 +100,9 @@ server = stockEndpoint
 
       closePsqlConnection psqlConn
 
-      return stocks
+      return $ addHeader "http://peterbecich.me" stocks
 
-    latestTickerTimestampEndpoint :: Maybe UUID -> Handler String
+    -- latestTickerTimestampEndpoint :: Maybe UUID -> Handler String
     latestTickerTimestampEndpoint (Just stockId) = do
       mTimestamp <- liftIO $ do
         redisConn <- getRedisConnection confPath
@@ -102,9 +115,9 @@ server = stockEndpoint
         return mTimestamp
         
       case mTimestamp of
-        (Just timestamp) -> return $ show timestamp
-        Nothing -> throwError err404 { errBody = C.pack ("No stock with ID "<> (show stockId)) }
-    latestTickerTimestampEndpoint Nothing = throwError err400 { errBody = "Missing stock UUID parameter: \"/stockId?stockId=[UUID]\"" }  
+        (Just timestamp) -> return $ addHeader "http://peterbecich.me" $ show timestamp
+        Nothing -> throwError $ err404 { errBody = C.pack ("No stock with ID "<> (show stockId)) }
+    latestTickerTimestampEndpoint Nothing = throwError $ err400 { errBody = "Missing stock UUID parameter: \"/stockId?stockId=[UUID]\"" }  
 
 
     latestTickerTimestampsEndpoint :: Handler (Map.Map UUID UTCTime)
