@@ -4,6 +4,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module Lib
     ( startApp
@@ -53,7 +54,8 @@ type LatestTickerTimestampHandler = "latestTickerTimestamp"
 type LatestTickerTimestampsHandler = "latestTickerTimestamps"
                                      :> Get '[JSON] (Map.Map UUID UTCTime)
 
-type RawHandler = Headers '[Header "Access-Control-Allow-Origin" String] Raw
+--type RawHandler = Headers '[Header "Access-Control-Allow-Origin" String] Raw
+type RawHandler = Raw
 
 type API = StockHandler
            :<|> StocksHandler
@@ -120,9 +122,8 @@ server = stockEndpoint
         
       case mTimestamp of
         (Just timestamp) -> return $ addHeader "http://peterbecich.me" $ show timestamp
-        -- Nothing -> throwError $ err404 { errBody = C.pack ("No stock with ID "<> (show stockId)) }
-    -- latestTickerTimestampEndpoint Nothing =
-    --   addHeader "http://peterbecich.me" <$> throwError $ err400 { errBody = "Missing stock UUID parameter: \"/stockId?stockId=[UUID]\"" }  
+        Nothing -> throwError $ err404 { errBody = C.pack ("No stock with ID "<> (show stockId)) }
+    latestTickerTimestampEndpoint Nothing = throwError $ err400 { errBody = "Missing stock UUID parameter: \"/stockId?stockId=[UUID]\"" }  
 
 
     --latestTickerTimestampsEndpoint :: Handler (Map.Map UUID UTCTime)
@@ -134,7 +135,8 @@ server = stockEndpoint
         return lt
       liftIO $ latestTimestamps
 
-    staticEndpoint :: Server (Headers '[Header "Access-Control-Allow-Origin" String] Raw)
+    --staticEndpoint :: Server (Headers '[Header "Access-Control-Allow-Origin" String] Raw)
+    staticEndpoint :: Server Raw
     staticEndpoint = serveDirectoryWebApp "stock-frontend"
 
 -- https://hackage.haskell.org/package/servant-server-0.11.0.1/docs/Servant-Server-Internal-Handler.html
