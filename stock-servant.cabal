@@ -30,6 +30,7 @@ library
                      , hedis
                      , bytestring
                      , containers
+                     , wai-extra
   default-language:    Haskell2010
 
 executable stock-servant

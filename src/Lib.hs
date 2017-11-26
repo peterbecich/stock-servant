@@ -22,6 +22,7 @@ import Data.UUID
 import Database.Redis
 import GHC.Generics
 import Network.Wai
+import Network.Wai.Middleware.AddHeaders
 import Network.Wai.Handler.Warp
 import Servant
 import System.Random (randomRIO)
@@ -137,7 +138,10 @@ server = stockEndpoint
 
     --staticEndpoint :: Server (Headers '[Header "Access-Control-Allow-Origin" String] Raw)
     staticEndpoint :: Server Raw
-    staticEndpoint = serveDirectoryWebApp "stock-frontend"
+    staticEndpoint =
+      let headerName = "Access-Control-Allow-Origin"
+          headerBody = "http://peterbecich.me"
+      in fmap (addHeaders [(headerName, headerBody)]) $ serveDirectoryWebApp "stock-frontend"
 
 -- https://hackage.haskell.org/package/servant-server-0.11.0.1/docs/Servant-Server-Internal-Handler.html
 
