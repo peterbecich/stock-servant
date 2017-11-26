@@ -42,14 +42,18 @@ import DB.Psql
 type StockHandler = "stock"
                     :> QueryParam "stockId" UUID
                     :> Get '[JSON] Stock
+
 type StocksHandler = "stocks"
                      :> Get '[JSON] (Headers '[Header "Access-Control-Allow-Origin" String] [Stock])
+
 type LatestTickerTimestampHandler = "latestTickerTimestamp"
                                     :> QueryParam "stockId" UUID
                                     :> Get '[PlainText] (Headers '[Header "Access-Control-Allow-Origin" String] String)
+
 type LatestTickerTimestampsHandler = "latestTickerTimestamps"
                                      :> Get '[JSON] (Map.Map UUID UTCTime)
-type RawHandler = Raw
+
+type RawHandler = Headers '[Header "Access-Control-Allow-Origin" String] Raw
 
 type API = StockHandler
            :<|> StocksHandler
@@ -116,11 +120,12 @@ server = stockEndpoint
         
       case mTimestamp of
         (Just timestamp) -> return $ addHeader "http://peterbecich.me" $ show timestamp
-        Nothing -> throwError $ err404 { errBody = C.pack ("No stock with ID "<> (show stockId)) }
-    latestTickerTimestampEndpoint Nothing = throwError $ err400 { errBody = "Missing stock UUID parameter: \"/stockId?stockId=[UUID]\"" }  
+        -- Nothing -> throwError $ err404 { errBody = C.pack ("No stock with ID "<> (show stockId)) }
+    -- latestTickerTimestampEndpoint Nothing =
+    --   addHeader "http://peterbecich.me" <$> throwError $ err400 { errBody = "Missing stock UUID parameter: \"/stockId?stockId=[UUID]\"" }  
 
 
-    latestTickerTimestampsEndpoint :: Handler (Map.Map UUID UTCTime)
+    --latestTickerTimestampsEndpoint :: Handler (Map.Map UUID UTCTime)
     latestTickerTimestampsEndpoint = do
       latestTimestamps <- pure $ do
         redisConn <- getRedisConnection confPath
@@ -129,7 +134,7 @@ server = stockEndpoint
         return lt
       liftIO $ latestTimestamps
 
-    staticEndpoint :: Server Raw
+    staticEndpoint :: Server (Headers '[Header "Access-Control-Allow-Origin" String] Raw)
     staticEndpoint = serveDirectoryWebApp "stock-frontend"
 
 -- https://hackage.haskell.org/package/servant-server-0.11.0.1/docs/Servant-Server-Internal-Handler.html
