@@ -43,19 +43,20 @@ import DB.Psql
 -- type StockHandler = "stock" :> QueryParam "stockId" UUID :> Get '[JSON] (Headers '[Header "Access-Control-Allow-Origin" String] Stock)
 type StockHandler = "stock"
                     :> QueryParam "stockId" UUID
-                    :> Get '[JSON] Stock
+                    :> Get '[JSON] (Headers '[Header "Origin" String, Header "Access-Control-Allow-Origin" String] Stock)
 
 type StocksHandler = "stocks"
-                     :> Get '[JSON] (Headers '[Header "Access-Control-Allow-Origin" String] [Stock])
+                     :> Get '[JSON] (Headers '[Header "Origin" String, Header "Access-Control-Allow-Origin" String] [Stock])
 
 type LatestTickerTimestampHandler = "latestTickerTimestamp"
                                     :> QueryParam "stockId" UUID
-                                    :> Get '[PlainText] (Headers '[Header "Access-Control-Allow-Origin" String] String)
+                                    :> Get '[PlainText] (Headers '[Header "Origin" String, Header "Access-Control-Allow-Origin" String] String)
 
 type LatestTickerTimestampsHandler = "latestTickerTimestamps"
-                                     :> Get '[JSON] (Map.Map UUID UTCTime)
+                                     :> Get '[JSON] (Headers '[Header "Origin" String, Header "Access-Control-Allow-Origin" String] (Map.Map UUID UTCTime))
 
---type RawHandler = Headers '[Header "Access-Control-Allow-Origin" String] Raw
+
+-- headers added with WAI
 type RawHandler = Raw
 
 type API = StockHandler
@@ -86,7 +87,7 @@ server = stockEndpoint
   where
     -- http://haskell-servant.readthedocs.io/en/stable/tutorial/Server.html#failing-through-servanterr
 
-    stockEndpoint :: Maybe UUID -> Handler Stock
+    --stockEndpoint :: Maybe UUID -> Handler Stock
     stockEndpoint (Just stockId) = do
       stocks <- liftIO $ do
         psqlConn <- getPsqlConnection confPath
@@ -95,7 +96,7 @@ server = stockEndpoint
         return stocks
         
       case stocks of
-        (stock:_) -> return stock
+        (stock:_) -> return $ addHeader "http://peterbecich.me" $ addHeader "http://peterbecich.me" stock
         _ -> throwError err404 { errBody = C.pack ("No stock with ID "<> (show stockId)) }
     stockEndpoint Nothing = throwError err400 { errBody = "Missing stock UUID parameter: \"/stockId?stockId=[UUID]\"" }
     
@@ -107,7 +108,7 @@ server = stockEndpoint
 
       closePsqlConnection psqlConn
 
-      return $ addHeader "http://peterbecich.me" stocks
+      return $ addHeader "http://peterbecich.me" $ addHeader "http://peterbecich.me" stocks
 
     -- latestTickerTimestampEndpoint :: Maybe UUID -> Handler String
     latestTickerTimestampEndpoint (Just stockId) = do
@@ -122,26 +123,27 @@ server = stockEndpoint
         return mTimestamp
         
       case mTimestamp of
-        (Just timestamp) -> return $ addHeader "http://peterbecich.me" $ show timestamp
+        (Just timestamp) -> return $ addHeader "http://peterbecich.me"  $ addHeader "http://peterbecich.me" $ show timestamp
         Nothing -> throwError $ err404 { errBody = C.pack ("No stock with ID "<> (show stockId)) }
     latestTickerTimestampEndpoint Nothing = throwError $ err400 { errBody = "Missing stock UUID parameter: \"/stockId?stockId=[UUID]\"" }  
 
 
     --latestTickerTimestampsEndpoint :: Handler (Map.Map UUID UTCTime)
     latestTickerTimestampsEndpoint = do
-      latestTimestamps <- pure $ do
+      latestTimestamps <- liftIO $ do
         redisConn <- getRedisConnection confPath
         lt <- runRedis redisConn getLatestTimestamps
         closeRedisConnection redisConn
         return lt
-      liftIO $ latestTimestamps
+      return $ addHeader "http://peterbecich.me" $ addHeader "http://peterbecich.me" latestTimestamps
 
     --staticEndpoint :: Server (Headers '[Header "Access-Control-Allow-Origin" String] Raw)
     staticEndpoint :: Server Raw
     staticEndpoint =
-      let headerName = "Access-Control-Allow-Origin"
-          headerBody = "http://peterbecich.me"
-      in fmap (addHeaders [(headerName, headerBody)]) $ serveDirectoryWebApp "stock-frontend"
+      let headerName1 = "Access-Control-Allow-Origin"
+          headerName2 = "Origin"
+          headerBody1 = "http://peterbecich.me"
+      in fmap (addHeaders [(headerName1, headerBody1), (headerName2, headerBody1)]) $ serveDirectoryWebApp "stock-frontend"
 
 -- https://hackage.haskell.org/package/servant-server-0.11.0.1/docs/Servant-Server-Internal-Handler.html
 
