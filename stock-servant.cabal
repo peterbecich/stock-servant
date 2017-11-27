@@ -18,6 +18,7 @@ library
   exposed-modules:     Lib
   build-depends:       base >= 4.7 && < 5
                      , stock-common >= 0.1.0.0
+                     , stock-stats >= 0.1.0.0  
                      , yaml-config >= 0.4.0
                      , aeson
                      , servant-server
