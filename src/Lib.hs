@@ -19,6 +19,7 @@ import Data.Either
 import Data.Monoid
 import Data.Time.Clock (UTCTime)
 import Data.UUID
+import Data.Maybe
 import Database.Redis
 import GHC.Generics
 import Network.Wai
@@ -36,14 +37,19 @@ import Types.MostRecentTick
 import Types.MostRecentTick.Redis
 import Types.MostRecentTick.JSON
 import Types.Tick
+import Types.StockPairCovariance.Redis (retrievePairCovariance')
 
 import DB.Redis
 import DB.Psql
 
--- type StockHandler = "stock" :> QueryParam "stockId" UUID :> Get '[JSON] (Headers '[Header "Access-Control-Allow-Origin" String] Stock)
 type StockHandler = "stock"
                     :> QueryParam "stockId" UUID
                     :> Get '[JSON] (Headers '[Header "Origin" String, Header "Access-Control-Allow-Origin" String] Stock)
+
+type PairCovarianceHandler = "pairCovariance"
+                    :> QueryParam "stockA" UUID
+                    :> QueryParam "stockB" UUID
+                    :> Get '[JSON] (Headers '[Header "Origin" String, Header "Access-Control-Allow-Origin" String] Double)
 
 type StocksHandler = "stocks"
                      :> Get '[JSON] (Headers '[Header "Origin" String, Header "Access-Control-Allow-Origin" String] [Stock])
@@ -61,6 +67,7 @@ type RawHandler = Raw
 
 type API = StockHandler
            :<|> StocksHandler
+           :<|> PairCovarianceHandler
            :<|> LatestTickerTimestampHandler
            :<|> LatestTickerTimestampsHandler
            :<|> RawHandler
@@ -79,6 +86,7 @@ confPath = "conf/servant.conf"
 server :: Server API
 server = stockEndpoint
          :<|> stocksEndpoint
+         :<|> pairCovarianceEndpoint
          :<|> latestTickerTimestampEndpoint
          :<|> latestTickerTimestampsEndpoint
          :<|> staticEndpoint
@@ -99,6 +107,20 @@ server = stockEndpoint
         (stock:_) -> return $ addHeader "http://peterbecich.me" $ addHeader "http://peterbecich.me" stock
         _ -> throwError err404 { errBody = C.pack ("No stock with ID "<> (show stockId)) }
     stockEndpoint Nothing = throwError err400 { errBody = "Missing stock UUID parameter: \"/stockId?stockId=[UUID]\"" }
+
+
+    pairCovarianceEndpoint (Just stockAId) (Just stockBId) = do
+      cov <- liftIO $ do
+        redisConn <- getRedisConnection confPath
+        eCov <- runRedis redisConn (retrievePairCovariance' stockAId stockBId) :: IO (Either Reply (Maybe Double))
+        let
+          mCov :: Maybe Double
+          mCov = either (\_ -> Just 0) id eCov
+          cov :: Double
+          cov = maybe 0 id mCov
+        closeRedisConnection redisConn
+        return cov
+      return $ addHeader "http://peterbecich.me" $ addHeader "http://peterbecich.me" cov
     
     -- stocksEndpoint :: Handler [Stock]
     stocksEndpoint = liftIO $ do
