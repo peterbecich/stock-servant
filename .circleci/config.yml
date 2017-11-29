@@ -10,6 +10,8 @@ jobs:
        #- image: ubuntu:14.04
        - image: peterbecich/haskell-stack:0.0.1
      steps:
-       - checkout
+       - checkout  # https://circleci.com/docs/2.0/configuration-reference/#checkout
+       - run: git submodule sync
+       - run: git submodule update --init
        - run: stack setup --no-terminal
        - run: stack build --only-configure --no-terminal
