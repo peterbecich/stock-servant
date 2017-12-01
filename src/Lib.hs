@@ -75,25 +75,24 @@ type API = StockHandler
 startApp :: Int -> IO ()
 startApp port = do
   psqlPool <- createPostgresPool confPath
-  run port (app psqlPool)
+  redisPool <- createRedisPool confPath
+  run port (app (psqlPool, redisPool))
 
-app :: PostgresPool -> Application
-app psqlPool = serve api (server psqlPool)
+app :: (PostgresPool, RedisPool) -> Application
+app (psqlPool, redisPool) = serve api (server (psqlPool, redisPool))
 
 api :: Proxy API
 api = Proxy
 
-confPath = "conf/servant.conf"
+confPath = "conf/servant.yaml"
 
-server :: PostgresPool -> Server API
-server psqlPool = stockEndpoint
+server :: (PostgresPool, RedisPool) -> Server API
+server (psqlPool, redisPool) = stockEndpoint
          :<|> stocksEndpoint
          :<|> pairCovarianceEndpoint
          :<|> latestTickerTimestampEndpoint
          :<|> latestTickerTimestampsEndpoint
          :<|> staticEndpoint
-
-
   where
     -- http://haskell-servant.readthedocs.io/en/stable/tutorial/Server.html#failing-through-servanterr
 
@@ -110,14 +109,13 @@ server psqlPool = stockEndpoint
 
     pairCovarianceEndpoint (Just stockAId) (Just stockBId) = do
       cov <- liftIO $ do
-        redisConn <- getRedisConnection confPath
-        eCov <- runRedis redisConn (retrievePairCovariance' stockAId stockBId) :: IO (Either Reply (Maybe Double))
+
+        eCov <- runRedisPool redisPool (retrievePairCovariance' stockAId stockBId) :: IO (Either Reply (Maybe Double))
         let
           mCov :: Maybe Double
           mCov = either (\_ -> Just 0) id eCov
           cov :: Double
           cov = maybe 0 id mCov
-        closeRedisConnection redisConn
         return cov
       return $ addHeader "http://peterbecich.me" $ addHeader "http://peterbecich.me" cov
     
@@ -129,12 +127,10 @@ server psqlPool = stockEndpoint
     -- latestTickerTimestampEndpoint :: Maybe UUID -> Handler String
     latestTickerTimestampEndpoint (Just stockId) = do
       mTimestamp <- liftIO $ do
-        redisConn <- getRedisConnection confPath
-        eTimestamp <- runRedis redisConn (getLatestTimestamp stockId) :: IO (Either Reply (Maybe UTCTime))
+        eTimestamp <- runRedisPool redisPool (getLatestTimestamp stockId) :: IO (Either Reply (Maybe UTCTime))
         let
           mTimestamp :: Maybe UTCTime
           mTimestamp = either (\_ -> Nothing) id eTimestamp
-        closeRedisConnection redisConn
 
         return mTimestamp
         
@@ -146,11 +142,8 @@ server psqlPool = stockEndpoint
 
     --latestTickerTimestampsEndpoint :: Handler (Map.Map UUID UTCTime)
     latestTickerTimestampsEndpoint = do
-      latestTimestamps <- liftIO $ do
-        redisConn <- getRedisConnection confPath
-        lt <- runRedis redisConn getLatestTimestamps
-        closeRedisConnection redisConn
-        return lt
+      latestTimestamps <- liftIO $
+        runRedisPool redisPool getLatestTimestamps
       return $ addHeader "http://peterbecich.me" $ addHeader "http://peterbecich.me" latestTimestamps
 
     --staticEndpoint :: Server (Headers '[Header "Access-Control-Allow-Origin" String] Raw)
