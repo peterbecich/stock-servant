@@ -73,18 +73,20 @@ type API = StockHandler
            :<|> RawHandler
 
 startApp :: Int -> IO ()
-startApp port = run port app
+startApp port = do
+  psqlPool <- createPostgresPool confPath
+  run port (app psqlPool)
 
-app :: Application
-app = serve api server
+app :: PostgresPool -> Application
+app psqlPool = serve api (server psqlPool)
 
 api :: Proxy API
 api = Proxy
 
 confPath = "conf/servant.conf"
 
-server :: Server API
-server = stockEndpoint
+server :: PostgresPool -> Server API
+server psqlPool = stockEndpoint
          :<|> stocksEndpoint
          :<|> pairCovarianceEndpoint
          :<|> latestTickerTimestampEndpoint
@@ -97,12 +99,9 @@ server = stockEndpoint
 
     --stockEndpoint :: Maybe UUID -> Handler Stock
     stockEndpoint (Just stockId) = do
-      stocks <- liftIO $ do
-        psqlConn <- getPsqlConnection confPath
-        stocks <- getStock stockId psqlConn
-        closePsqlConnection psqlConn
-        return stocks
-        
+      stocks <- liftIO $
+        runQueryPool psqlPool (stockIdQuery stockId)
+
       case stocks of
         (stock:_) -> return $ addHeader "http://peterbecich.me" $ addHeader "http://peterbecich.me" stock
         _ -> throwError err404 { errBody = C.pack ("No stock with ID "<> (show stockId)) }
@@ -124,12 +123,7 @@ server = stockEndpoint
     
     -- stocksEndpoint :: Handler [Stock]
     stocksEndpoint = liftIO $ do
-      psqlConn <- getPsqlConnection confPath
-
-      stocks <- getStocks psqlConn
-
-      closePsqlConnection psqlConn
-
+      stocks <- runQueryPool psqlPool stockQuery
       return $ addHeader "http://peterbecich.me" $ addHeader "http://peterbecich.me" stocks
 
     -- latestTickerTimestampEndpoint :: Maybe UUID -> Handler String
