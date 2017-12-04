@@ -1,4 +1,7 @@
-sudo: false
+sudo: required
+
+services:
+  - docker
 
 # Caching so the next build will be fast too.
 cache:
@@ -6,6 +9,7 @@ cache:
   - $HOME/.stack
 
 before_install:
+  - docker pull fpco/stack-build:lts-9.17
   - openssl aes-256-cbc -K $encrypted_67f787260264_key -iv $encrypted_67f787260264_iv -in scaleway_travis_servant.enc -out scaleway_travis_servant -d
   - sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules
   - git submodule update --init

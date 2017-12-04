@@ -84,7 +84,7 @@ app (psqlPool, redisPool) = serve api (server (psqlPool, redisPool))
 api :: Proxy API
 api = Proxy
 
-confPath = "conf/servant.yaml"
+confPath = "/usr/local/etc/servant.yaml"
 
 server :: (PostgresPool, RedisPool) -> Server API
 server (psqlPool, redisPool) = stockEndpoint

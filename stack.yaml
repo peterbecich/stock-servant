@@ -1,5 +1,5 @@
 
-resolver: lts-9.13
+resolver: lts-9.17
 
 # https://github.com/commercialhaskell/stack/blob/master/doc/yaml_configuration.md
 packages:
@@ -23,7 +23,7 @@ ghc-options:
 image:
   containers:
     -
-      base: "fpco/stack-build:lts-9.13"
+      base: "fpco/stack-build:lts-9.17"
       name: "peterbecich/stock-servant"
 
       entrypoints:
