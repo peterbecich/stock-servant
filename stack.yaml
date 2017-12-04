@@ -26,6 +26,9 @@ image:
       base: "fpco/stack-build:lts-9.17"
       name: "peterbecich/stock-servant"
 
+      add:
+        conf/: /usr/local/etc/
+
       entrypoints:
         - stock-servant
   
