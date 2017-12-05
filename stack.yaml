@@ -20,6 +20,9 @@ extra-package-dbs: []
 ghc-options:
   "*": -j -threaded
 
+docker:
+  enable: true
+  
 image:
   containers:
     -
