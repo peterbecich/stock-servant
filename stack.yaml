@@ -31,4 +31,8 @@ image:
 
       entrypoints:
         - stock-servant
-  
+        - stock-servant-local
+
+      executables:
+        - stock-servant
+        - stock-servant-local
