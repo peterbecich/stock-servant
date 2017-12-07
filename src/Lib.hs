@@ -152,7 +152,7 @@ server (psqlPool, redisPool) = stockEndpoint
       let headerName1 = "Access-Control-Allow-Origin"
           headerName2 = "Origin"
           headerBody1 = "http://peterbecich.me"
-      in fmap (addHeaders [(headerName1, headerBody1), (headerName2, headerBody1)]) $ serveDirectoryWebApp "stock-frontend"
+      in fmap (addHeaders [(headerName1, headerBody1), (headerName2, headerBody1)]) $ serveDirectoryWebApp "/srv/stock-frontend/"
 
 -- https://hackage.haskell.org/package/servant-server-0.11.0.1/docs/Servant-Server-Internal-Handler.html
 
