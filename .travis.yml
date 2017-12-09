@@ -35,11 +35,11 @@ before_install:
   # - chmod 600 travis_servant_stats3
   # - ssh-add travis_servant_stats3
 
-  - openssl aes-256-cbc -k $servant_common_pass -in travis_servant_common2.enc -out travis_servant_common2 -d
+  - openssl aes-256-cbc -k "$servant_common_pass" -in travis_servant_common2.enc -out travis_servant_common2 -d
   - chmod 600 travis_servant_common2
   - ssh-add travis_servant_common2
 
-  - openssl aes-256-cbc -k $servant_stats_pass -in travis_servant_stats3.enc -out travis_servant_stats3 -d
+  - openssl aes-256-cbc -k "$servant_stats_pass" -in travis_servant_stats3.enc -out travis_servant_stats3 -d
   - chmod 600 travis_servant_stats3
   - ssh-add travis_servant_stats3
 
