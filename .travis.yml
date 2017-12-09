@@ -35,11 +35,11 @@ before_install:
   # - chmod 600 travis_servant_stats3
   # - ssh-add travis_servant_stats3
 
-  - openssl aes-256-cbc -K $encrypted_1ea99ed25c80_key -iv $encrypted_1ea99ed25c80_iv -in travis_servant_common2.enc -out travis_servant_common2 -d
+  - openssl aes-256-cbc -k $servant_common_pass -in travis_servant_common2.enc -out travis_servant_common2 -d
   - chmod 600 travis_servant_common2
   - ssh-add travis_servant_common2
 
-  - openssl aes-256-cbc -K $encrypted_1ea99ed25c80_key -iv $encrypted_1ea99ed25c80_iv -in travis_servant_stats3.enc -out travis_servant_stats3 -d
+  - openssl aes-256-cbc -k $servant_stats_pass -in travis_servant_stats3.enc -out travis_servant_stats3 -d
   - chmod 600 travis_servant_stats3
   - ssh-add travis_servant_stats3
 
@@ -72,3 +72,9 @@ after_success:
   
 git:
   submodules: false
+
+
+secure:
+  - "oj8V6tsJEkR1AyuhZkvA/rXw7r2e4pX7gPSAujvrjvceG2y0IbdIxMHoInb8DxPJsqlICdTshniJ48bdy3QXXrNQHFISGLOFvpHtDR9tauYFJZ/kmWVtm+X2kkcaD/2QF3lWq8Gx+I5XP4hcSkogvqKftyxojJEsAgAiRgffcpWzyWIflP2q+44W/O84EofIJBGjki8pUCTFpWu7CCbPXVvKzo9jmjgu46E/tT617tv2mwvsJtU/hGr5u7hmUai7cT1Ollir5BgyEo+nZ9UBNkImsHCzHcAAp+nhPn+NQLtknTfu1xdSq5zgei9xueXgKonythDM6r6ki2x3KKKFWGNZ0pOI5C6/uwiGfFokMTQg6GtnmmuPcFbpIOOrEK5z9PMeBlxMINm/BEEFKnzVuNVIgDaSbo99svfrQyzK/tOLm2GO7MMTda+g4DH7JiN8ONzvfETksP2NQvaqTtpJ4zWXZurCTBLwCOupxC1CV0loJxWE9Z6WVswJGzH0iibY5KEgF6D1gTxVra9arNkanrLdeOA/nd9f0DLp1yw8sNMopAZqZlqkOPCJ/6Yo+VtAfxg/NefR+2ZxpM2DEZKkBLpxJ1fxnr7bduoyhms3PJ3ybfkfCGbVogQ1+Yy035dNxBWG4EBDA9zPfpHWQpWqOfBIWLfVvSRvTPomSPzNWN8="
+  
+- "siogJD6P4mB+7DBK+GVHddk1YcaoZ+3VuPKaeQvzcAhXYO6mM/lyGgDmgNw19FWPVDcW+IlDIGLb3gnnsnL2g/pZLwZiM0BhgXWIdma23wx/snDFY3ZzmGbiV5ejoRXcYi3hANCWOvqqDxjFhRGCaUopm1UHabIAbgcVlve3qTL7nwZY6RXpwSoXyD70PrFj7cY8kwQwZ4xKQ80YukQ5Drtp3qH+wZsWArHqqZm96qblBp2cT1duzORSC5lX99WAtVBbBIp6w6pme7W4dTU0Fh824M/TEIlf8VlvDdj+TEOV0tuqb6ejUDTq2L+Gi8C7nGrqxF+WvM0i7K78brVGGCffUumqlH/etpV05X/GTrPuG6t4Zx3yiRXDotIszZFsp06G+J7EqNOza/w2Rue711CwM5N+W04RGCYnm93+veZobutIo+0RQyjqQGz+bxytUGHGTLu38+w8vj1EwFmzCr/VMTV63ttNeHn4+e4zNqlPxky7vtDBw5YwcJVb44igecJw0/sFwIrgpv8jNJV5GMB1otqPXJDNYTo0fA8ZSlzLnkhJmXiKf/uCuULUlTBlI1e4VLjJelgTFIaPOWq3gHz/GQ5+WE4r2cRFLcJxJWhCcuDkJvrsRjKuA3bev+Y02V2NhG0tQYI5VQPGyn4CG+3i6PBWrAo1dqbX0Pvl1mI="
