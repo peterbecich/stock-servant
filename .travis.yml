@@ -5,8 +5,10 @@ services:
 
 # Caching so the next build will be fast too.
 cache:
+  timeout: 600
   directories:
   - $HOME/.stack
+  - /var/lib/docker
 
 before_install:
   - eval "$(ssh-agent -s)" #start the ssh agent
