@@ -19,6 +19,10 @@ before_install:
   # - chmod 600 travis_servant_stats
   # - ssh-add travis_servant_stats
 
+  - openssl aes-256-cbc -K $encrypted_1ea99ed25c80_key -iv $encrypted_1ea99ed25c80_iv -in travis_servant_common2.enc -out travis_servant_common2 -d
+  - chmod 600 travis_servant_common2
+  - ssh-add travis_servant_common2
+
   - openssl aes-256-cbc -K $encrypted_1ea99ed25c80_key -iv $encrypted_1ea99ed25c80_iv -in travis_servant_stats2.enc -out travis_servant_stats2 -d
   - chmod 600 travis_servant_stats2
   - ssh-add travis_servant_stats2
@@ -27,9 +31,6 @@ before_install:
   # - chmod 600 travis_servant_common
   # - ssh-add travis_servant_common
 
-  - openssl aes-256-cbc -K $encrypted_1ea99ed25c80_key -iv $encrypted_1ea99ed25c80_iv -in travis_servant_common2.enc -out travis_servant_common2 -d
-  - chmod 600 travis_servant_common2
-  - ssh-add travis_servant_common2
 
   
   - git submodule update --init --recursive
