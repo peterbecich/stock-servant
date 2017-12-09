@@ -13,15 +13,15 @@ cache:
 before_install:
   - eval "$(ssh-agent -s)" #start the ssh agent
 
-  - openssl aes-256-cbc -K $encrypted_67f787260264_key -iv $encrypted_67f787260264_iv -in scaleway_travis_servant.enc -out scaleway_travis_servant -d
+  # - openssl aes-256-cbc -K $encrypted_67f787260264_key -iv $encrypted_67f787260264_iv -in scaleway_travis_servant.enc -out scaleway_travis_servant -d
 
   # - openssl aes-256-cbc -K $encrypted_1ea99ed25c80_key -iv $encrypted_1ea99ed25c80_iv -in travis_servant_stats.enc -out travis_servant_stats -d
   # - chmod 600 travis_servant_stats
   # - ssh-add travis_servant_stats
 
-  - openssl aes-256-cbc -K $encrypted_1ea99ed25c80_key -iv $encrypted_1ea99ed25c80_iv -in travis_servant_common2.enc -out travis_servant_common2 -d
-  - chmod 600 travis_servant_common2
-  - ssh-add travis_servant_common2
+  # - openssl aes-256-cbc -K $encrypted_1ea99ed25c80_key -iv $encrypted_1ea99ed25c80_iv -in travis_servant_common2.enc -out travis_servant_common2 -d
+  # - chmod 600 travis_servant_common2
+  # - ssh-add travis_servant_common2
 
   # - openssl aes-256-cbc -K $encrypted_1ea99ed25c80_key -iv $encrypted_1ea99ed25c80_iv -in travis_servant_stats2.enc -out travis_servant_stats2 -d
   # - chmod 600 travis_servant_stats2
@@ -31,10 +31,19 @@ before_install:
   # - chmod 600 travis_servant_common
   # - ssh-add travis_servant_common
 
+  # - openssl aes-256-cbc -K $encrypted_1ea99ed25c80_key -iv $encrypted_1ea99ed25c80_iv -in travis_servant_stats3.enc -out travis_servant_stats3 -d
+  # - chmod 600 travis_servant_stats3
+  # - ssh-add travis_servant_stats3
+
+  - openssl aes-256-cbc -K $encrypted_1ea99ed25c80_key -iv $encrypted_1ea99ed25c80_iv -in travis_servant_common2.enc -out travis_servant_common2 -d
+  - chmod 600 travis_servant_common2
+  - ssh-add travis_servant_common2
+
   - openssl aes-256-cbc -K $encrypted_1ea99ed25c80_key -iv $encrypted_1ea99ed25c80_iv -in travis_servant_stats3.enc -out travis_servant_stats3 -d
   - chmod 600 travis_servant_stats3
   - ssh-add travis_servant_stats3
 
+  
   
   - git submodule update --init --recursive
 
