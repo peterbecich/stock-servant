@@ -53,7 +53,8 @@ before_install:
   - stack setup
   
 script:
-  - stack build
+  - echo "foobar"
+  # - stack build
   # - stack image container
   
 addons:
