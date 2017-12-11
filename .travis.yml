@@ -26,6 +26,9 @@ before_install:
   - openssl aes-256-cbc -K $encrypted_1ea99ed25c80_key -iv $encrypted_1ea99ed25c80_iv -in travis_servant_secrets.tar.enc -out travis_servant_secrets.tar -d
   - tar xvf travis_servant_secrets.tar
 
+  - chmod 600 travis_servant
+  - ssh-add travis_servant
+  
   - chmod 600 travis_servant_stats
   - ssh-add travis_servant_stats
 

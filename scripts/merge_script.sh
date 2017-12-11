@@ -2,9 +2,16 @@
 
 echo "merge_script.sh"
 if [ "$TRAVIS_BRANCH" == "master" ]; then
-    echo "merge into production"
-    git fetch --all
+    echo "merge into production; check out deep repo"
+    # https://stackoverflow.com/a/32580822/1007926
+    echo "git clone git@github.com:${TRAVIS_REPO_SLUG}.git"
+    git clone git@github.com:${TRAVIS_REPO_SLUG}.git $TRAVIS_REPO_SLUG
+    cd $TRAVIS_REPO_SLUG
+    echo "git checkout -qf $TRAVIS_COMMIT"
+    git checkout -qf $TRAVIS_COMMIT
+    echo "git checkout production"
     git checkout production || exit
+    echo "git merge $TRAVIS_COMMIT"
     git merge "$TRAVIS_COMMIT" || exit
     git push origin production || exit
 fi
