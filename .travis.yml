@@ -52,8 +52,8 @@ before_install:
   - stack setup
   
 script:
-  - stack build
-  - stack image container
+  # - stack build
+  # - stack image container
   
 addons:
   ssh_known_hosts:
@@ -72,10 +72,8 @@ after_success:
   # - echo "success; run merge_script.sh"
   # - ./scripts/merge_script.sh
 
-  
 git:
   submodules: false
-
 
 before_cache:
   # Save tagged docker images
