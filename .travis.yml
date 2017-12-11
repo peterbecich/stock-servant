@@ -10,6 +10,7 @@ cache:
   - $HOME/.stack
   #- /var/lib/docker
   - $HOME/docker  #https://github.com/travis-ci/travis-ci/issues/5358#issuecomment-248915326
+  - $HOME/build/peterbecich/stock-servant/.stack-work
 
   
 before_install:
@@ -52,7 +53,7 @@ before_install:
   - stack setup
   
 script:
-  # - stack build
+  - stack build
   # - stack image container
   
 addons:
