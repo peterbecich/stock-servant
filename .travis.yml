@@ -5,7 +5,7 @@ services:
 
 cache:
   timeout: 600
-  bundler: false
+  bundler: true
   directories:
   - $HOME/.stack
   - $HOME/docker    
@@ -23,15 +23,18 @@ before_install:
   - sudo apt-get -y install docker-ce
 
   # Load cached docker images
-  # - if [[ -d $HOME/docker ]]; then ls $HOME/docker/*.tar.gz | xargs -I {file} sh -c "zcat {file} | docker load"; fi
+  - if [[ -d $HOME/docker ]]; then ls $HOME/docker/*.tar.gz | xargs -I {file} sh -c "zcat {file} | docker load"; fi
 
   - pwd
   
   - eval "$(ssh-agent -s)" #start the ssh agent
 
-  - openssl aes-256-cbc -K $encrypted_1ea99ed25c80_key -iv $encrypted_1ea99ed25c80_iv -in travis_servant_secrets.tar.enc -out travis_servant_secrets.tar -d
-  - tar xvf travis_servant_secrets.tar
+  - openssl aes-256-cbc -K $encrypted_203c014950d1_key -iv $encrypted_203c014950d1_iv -in stock-servant_secrets.tar.enc -out stock-servant_secrets.tar -d
+  - tar xvf stock-servant_secrets.tar
 
+  - chmod 600 travis_servant_push_github
+  - ssh-add travis_servant_push_github
+  
   - chmod 600 travis_servant
   - ssh-add travis_servant
   
@@ -44,9 +47,6 @@ before_install:
   - chmod 600 travis_servant_stats_common
   - ssh-add travis_servant_stats_common
 
-  - chmod 600 travis_servant_push_github
-  - ssh-add travis_servant_push_github
-  
   - git submodule update --init --recursive
 
   - pwd
@@ -64,36 +64,23 @@ before_install:
   
 script:
   - df -h
-  - stack build
-  - stack image container
-  - echo "run merge.sh"  # This should not run if script fails earlier
-  # https://stackoverflow.com/a/43953433/1007926
-  - export GIT_SSH_COMMAND='ssh -i $HOME/build/peterbecich/stock-servant/travis_servant_push_github'
-  - ./stock-ops/travis/merge.sh
+  - echo "don't build just yet"
+  # - stack build
+  # - stack image container
+  # - echo "run merge.sh"  # This should not run if script fails earlier
+  # # https://stackoverflow.com/a/43953433/1007926
+  # - export GIT_SSH_COMMAND='ssh -i $HOME/build/peterbecich/stock-servant/travis_servant_push_github'
+  # - ./stock-ops/travis/merge.sh
   
 addons:
   ssh_known_hosts:
-
-  
-# https://docs.travis-ci.com/user/deployment/custom/
-#after_success:
-  # - eval "$(ssh-agent -s)" #start the ssh agent
-  # - chmod 600 scaleway_travis_servant # this key should have push access
-  # - ssh-add scaleway_travis_servant
-  # - git config --global receive.denyCurrentBranch ignore
-  # - git remote add deploy git@ce3b12e3-5fee-4248-b3e4-24dfc4fc38c6.pub.cloud.scaleway.com:/srv/stock-servant/.git
-  # - git push deploy master
-
-after_success:
-  # - echo "success; run merge_script.sh"
-  # - ./scripts/merge_script.sh
 
 git:
   submodules: false
 
 before_cache:
   # Save tagged docker images
-  # - >
-  #   mkdir -p $HOME/docker && docker images -a --filter='dangling=false' --format '{{.Repository}}:{{.Tag}} {{.ID}}'
-  #   | xargs -n 2 -t sh -c 'test -e $HOME/docker/$1.tar.gz || docker save $0 | gzip -2 > $HOME/docker/$1.tar.gz'
-  
+  - >
+    mkdir -p $HOME/docker && docker images "fpco/*" -a --filter='dangling=false' --format '{{.Repository}}:{{.Tag}} {{.ID}}'
+    | xargs -n 2 -t sh -c 'test -e $HOME/docker/$1.tar.gz || docker save $0 | gzip -2 > $HOME/docker/$1.tar.gz'
+
