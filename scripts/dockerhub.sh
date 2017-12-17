@@ -4,4 +4,6 @@ if [ "$TRAVIS_BRANCH" == "production" ]; then
     echo "logged into Docker Hub"
     echo "docker push peterbecich/stock-servant-stock-servant"
     docker push peterbecich/stock-servant-stock-servant
+    echo "docker push peterbecich/stock-servant-stock-servant-local"
+    docker push peterbecich/stock-servant-stock-servant-local
 fi
