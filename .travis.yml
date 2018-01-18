@@ -66,13 +66,13 @@ script:
   - df -h
   # - echo "don't build just yet"
   - stack build --only-dependencies --fast
-  # - stack build
-  # - stack image container
-  # - echo "run merge.sh"  # This should not run if script fails earlier
-  # # https://stackoverflow.com/a/43953433/1007926
-  # - export GIT_SSH_COMMAND='ssh -i $HOME/build/peterbecich/stock-servant/travis_servant_push_github'
-  # - ./stock-ops/travis/merge.sh
-  # - ./scripts/dockerhub.sh
+  - stack build --fast
+  - stack image container
+  - echo "run merge.sh"  # This should not run if script fails earlier
+  # https://stackoverflow.com/a/43953433/1007926
+  - export GIT_SSH_COMMAND='ssh -i $HOME/build/peterbecich/stock-servant/travis_servant_push_github'
+  - ./stock-ops/travis/merge.sh
+  - ./scripts/dockerhub.sh
   
 addons:
   ssh_known_hosts:
