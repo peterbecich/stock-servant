@@ -17,7 +17,7 @@ import Data.Aeson.TH
 import Data.ByteString.Char8
 import Data.Either
 import Data.Monoid
-import Data.Time.Clock (UTCTime)
+import Data.Time.Clock (UTCTime, getCurrentTime)
 import Data.UUID
 import Data.Maybe
 import Database.Redis
@@ -61,6 +61,10 @@ type LatestTickerTimestampHandler = "latestTickerTimestamp"
 type LatestTickerTimestampsHandler = "latestTickerTimestamps"
                                      :> Get '[JSON] (Headers '[Header "Origin" String, Header "Access-Control-Allow-Origin" String] (Map.Map UUID UTCTime))
 
+type ServerStartTimestampHandler = "serverStart" :> Get '[JSON] (Headers '[Header "Origin" String, Header "Access-Control-Allow-Origin" String] UTCTime)
+
+type CurrentTimestampHandler = "currentTime" :> Get '[JSON] (Headers '[Header "Origin" String, Header "Access-Control-Allow-Origin" String] UTCTime)
+
 
 -- headers added with WAI
 type RawHandler = Raw
@@ -71,6 +75,8 @@ type API = StockHandler
            :<|> LatestTickerTimestampHandler
            :<|> LatestTickerTimestampsHandler
            :<|> RawHandler
+           :<|> ServerStartTimestampHandler
+           :<|> CurrentTimestampHandler
 
 startApp :: Int -> IO ()
 startApp port = do
@@ -93,6 +99,8 @@ server (psqlPool, redisPool) = stockEndpoint
          :<|> latestTickerTimestampEndpoint
          :<|> latestTickerTimestampsEndpoint
          :<|> staticEndpoint
+         :<|> serverStartTimestampEndpoint
+         :<|> currentTimeEndpoint
   where
     -- http://haskell-servant.readthedocs.io/en/stable/tutorial/Server.html#failing-through-servanterr
 
@@ -153,6 +161,13 @@ server (psqlPool, redisPool) = stockEndpoint
           headerName2 = "Origin"
           headerBody1 = "http://peterbecich.me"
       in fmap (addHeaders [(headerName1, headerBody1), (headerName2, headerBody1)]) $ serveDirectoryWebApp "/srv/stock-frontend/"
+
+    serverStartTimestampEndpoint = do
+      undefined
+
+    currentTimeEndpoint = do
+      now <- liftIO getCurrentTime
+      return $ addHeader "http://peterbecich.me" $ addHeader "http://peterbecich.me" now
 
 -- https://hackage.haskell.org/package/servant-server-0.11.0.1/docs/Servant-Server-Internal-Handler.html
 
