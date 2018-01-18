@@ -1,5 +1,5 @@
 
-resolver: lts-9.17
+resolver: lts-10.3
 
 # https://github.com/commercialhaskell/stack/blob/master/doc/yaml_configuration.md
 packages:
@@ -18,8 +18,8 @@ flags: {}
 extra-package-dbs: []
 
 
-ghc-options:
-  "*": -j -threaded
+# ghc-options:
+#   "*": -j -threaded
 
 docker:
   enable: true
@@ -27,7 +27,7 @@ docker:
 image:
   containers:
     -
-      base: "fpco/stack-build:lts-9.17"
+      base: "fpco/stack-build:lts-10.3"
       name: "peterbecich/stock-servant"
 
       add:
